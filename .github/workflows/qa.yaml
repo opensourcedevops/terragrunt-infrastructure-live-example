@@ -1,7 +1,8 @@
 name: 'Terraform QA PR Workflow'
 on:
-  - pull_request
-  - 'non-prod/us-east-1/qa/**'
+  pull_request:
+    paths:
+    - 'non-prod/us-east-1/qa/**'
 env:
   tf_version: '0.12.29'
   tg_version: '0.26.7'
