@@ -2,7 +2,7 @@ name: 'Terraform QA MySQL PR Workflow'
 on:
   pull_request:
     paths:
-    - 'non-prod/us-east-1/qa/mysql'
+    - 'non-prod/us-east-1/qa/mysql/**'
 env:
   tf_version: '0.12.29'
   tg_version: 'latest'
