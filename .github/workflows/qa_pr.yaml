@@ -13,7 +13,7 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 jobs:
   terragrunt:
-    name: Example Terragrunt interaction
+    name: QA S3
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -30,6 +30,40 @@ jobs:
         with:
           terragrunt_version: 0.26.7
       - name: Interact with Terragrunt
+        id: version
         run: terragrunt --version
+      - name: Terragrunt Format
+        id: fmt
+        run: terragrunt fmt
+      - name: Terragrunt Validate
+        id: validate
+        run: terragrunt validate -no-color
       - name: Terragrunt Plan
-        run: terragrunt plan
+        id: plan
+        run: terragrunt plan -no-color
+        continue-on-error: true
+      - uses: actions/github-script@0.9.0
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terraform Validation 🤖${{ steps.validate.outputs.stdout }}
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+            
+            <details><summary>Show Plan</summary>
+            
+            \`\`\`${process.env.PLAN}\`\`\`
+            
+            </details>
+            
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*`;
+              
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
